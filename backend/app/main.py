@@ -1,5 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.database import engine, Base
+
+# Import all models so SQLAlchemy knows about them
+import app.models
 
 app = FastAPI(
     title="Logistics & Fleet Management Platform",
@@ -7,14 +11,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS — allows the React frontend to talk to this backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # React dev server
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# This creates all tables in the database on startup
+@app.on_event("startup")
+def create_tables():
+    Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def root():
