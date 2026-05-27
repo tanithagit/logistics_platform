@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
-from app.routers import auth
+from app.routers import auth, users, vehicles
 
 import app.models
 
@@ -19,8 +19,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register all routers
+# All routers registered here
 app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(vehicles.router)
 
 @app.on_event("startup")
 def create_tables():

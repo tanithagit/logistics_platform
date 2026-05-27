@@ -95,7 +95,7 @@ def login_user(data: LoginRequest, db: Session):
         "organization_id": user.organization_id
     }
 }
-    }
+    
 
 def create_user_by_admin(
     data,
