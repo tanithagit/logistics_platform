@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
+from app.routers import auth
 
-# Import all models so SQLAlchemy knows about them
 import app.models
 
 app = FastAPI(
@@ -19,7 +19,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# This creates all tables in the database on startup
+# Register all routers
+app.include_router(auth.router)
+
 @app.on_event("startup")
 def create_tables():
     Base.metadata.create_all(bind=engine)
