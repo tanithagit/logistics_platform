@@ -1,17 +1,33 @@
-# Python
+# Python virtual environment
+venv/
 backend/venv/
-backend/__pycache__/
-backend/**/__pycache__/
-backend/**/*.pyc
-backend/.env
+**/venv/
 
-# Node
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables (secrets)
+.env
+**/.env
+
+# Node modules
+node_modules/
 frontend/node_modules/
-frontend/dist/
 
-# OS
+# Frontend build
+frontend/dist/
+dist/
+
+# OS files
 .DS_Store
 Thumbs.db
 
-# Alembic
-backend/alembic/versions/*.pyc
+# Test files
+websocket_test.html
+
+# Alembic cache
+*.pyc

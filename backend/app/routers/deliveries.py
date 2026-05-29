@@ -19,6 +19,7 @@ from app.schemas.delivery import (
 )
 from app.schemas.payment import PaymentCreateRequest, PaymentResponse
 from app.services import delivery_service, payment_service
+from app.core.websocket_manager import manager
 
 router = APIRouter(prefix="/deliveries", tags=["Delivery Management"])
 
@@ -78,16 +79,38 @@ def update_status(
     )
 
 @router.post("/{delivery_id}/tracking", response_model=TrackingResponse)
-def add_tracking(
+async def add_tracking(
     delivery_id: int,
     data: TrackingUpdateRequest,
     current_user=Depends(require_driver),
     db: Session = Depends(get_db)
 ):
-    """Driver sends current GPS location"""
-    return delivery_service.add_tracking_update(
+    """Driver sends current GPS location — broadcasts via WebSocket"""
+
+    # Save to database
+    tracking = delivery_service.add_tracking_update(
         delivery_id, data, current_user, db
     )
+
+    # Get delivery status for broadcast
+    from app.models.delivery import Delivery
+    delivery = db.query(Delivery).filter(
+        Delivery.id == delivery_id
+    ).first()
+
+    # Broadcast to all WebSocket clients watching this delivery
+    message = {
+        "type": "location_update",
+        "delivery_id": delivery_id,
+        "latitude": data.latitude,
+        "longitude": data.longitude,
+        "address": data.address_snapshot,
+        "status": delivery.status.value if delivery else "unknown"
+    }
+
+    await manager.broadcast_to_delivery(delivery_id, message)
+
+    return tracking
 
 # ─── Admin Endpoints ──────────────────────────────────────────
 

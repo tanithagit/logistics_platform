@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine, Base
-from app.routers import auth, users, vehicles, deliveries
+from app.routers import auth, users, vehicles, deliveries, dashboard, websockets
 
 import app.models
 
@@ -23,6 +23,8 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(vehicles.router)
 app.include_router(deliveries.router)
+app.include_router(dashboard.router)
+app.include_router(websockets.router)
 
 @app.on_event("startup")
 def create_tables():
