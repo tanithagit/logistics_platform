@@ -1,33 +1,27 @@
-# Python virtual environment
+# Python
 venv/
 backend/venv/
 **/venv/
-
-# Python cache
 __pycache__/
 **/__pycache__/
 *.pyc
-*.pyo
-*.pyd
 
-# Environment variables (secrets)
+# Environment
 .env
 **/.env
 
-# Node modules
+# Node
 node_modules/
 frontend/node_modules/
-
-# Frontend build
 frontend/dist/
-dist/
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
-# Test files
-websocket_test.html
+# Test cache
+.pytest_cache/
+**/.pytest_cache/
 
-# Alembic cache
-*.pyc
+# Vite cache
+frontend/.vite/

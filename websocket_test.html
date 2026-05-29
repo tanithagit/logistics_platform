@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        h2 { color: #00d4ff; }
+        .controls { margin: 20px 0; display: flex; gap: 10px; }
+        input {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: none;
+            width: 100px;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .connect-btn { background: #00d4ff; color: #000; }
+        .disconnect-btn { background: #ff4757; color: #fff; }
+        .clear-btn { background: #555; color: #fff; }
+        #status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .connected { background: #2ed573; color: #000; }
+        .disconnected { background: #ff4757; color: #fff; }
+        .waiting { background: #ffa502; color: #000; }
+        #messages {
+            background: #16213e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            height: 350px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .msg-connected { color: #2ed573; }
+        .msg-update { color: #00d4ff; }
+        .msg-ping { color: #888; }
+        .msg-error { color: #ff4757; }
+        .msg-info { color: #ffa502; }
+        .timestamp { color: #555; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+<h2>🚀 WebSocket Live Tracking Tester</h2>
+
+<div class="controls">
+    <label>Delivery ID:</label>
+    <input type="number" id="deliveryId" value="1" min="1"/>
+    <button class="connect-btn" onclick="connectWS()">Connect</button>
+    <button class="disconnect-btn" onclick="disconnectWS()">Disconnect</button>
+    <button class="clear-btn" onclick="clearMessages()">Clear</button>
+</div>
+
+<div id="status" class="waiting">
+    ⏳ Not connected
+</div>
+
+<h3>Messages:</h3>
+<div id="messages"></div>
+
+<script>
+    let ws = null;
+
+    function getTime() {
+        return new Date().toLocaleTimeString();
+    }
+
+    function addMessage(text, type = 'msg-info') {
+        const div = document.getElementById('messages');
+        div.innerHTML += `
+            <div class="${type}">
+                <span class="timestamp">[${getTime()}]</span> ${text}
+            </div>`;
+        div.scrollTop = div.scrollHeight;
+    }
+
+    function connectWS() {
+        const deliveryId = document.getElementById('deliveryId').value;
+
+        if (ws) {
+            ws.close();
+        }
+
+        const url = `ws://localhost:8000/ws/tracking/${deliveryId}`;
+        addMessage(`Connecting to: ${url}`, 'msg-info');
+
+        ws = new WebSocket(url);
+
+        ws.onopen = () => {
+            document.getElementById('status').className = 'connected';
+            document.getElementById('status').textContent = `✅ Connected to Delivery #${deliveryId}`;
+            addMessage(`Connected to delivery #${deliveryId}`, 'msg-connected');
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'connected') {
+                addMessage(`📍 Initial Status: ${data.status}`, 'msg-connected');
+                if (data.latitude) {
+                    addMessage(`📌 Last Location: ${data.latitude}, ${data.longitude}`, 'msg-update');
+                }
+            } else if (data.type === 'location_update') {
+                addMessage(`🚚 Location Update → Lat: ${data.latitude}, Lng: ${data.longitude} | Status: ${data.status}`, 'msg-update');
+                if (data.address) {
+                    addMessage(`📍 Address: ${data.address}`, 'msg-update');
+                }
+            } else if (data.type === 'ping') {
+                addMessage(`🏓 Ping: ${data.message}`, 'msg-ping');
+            } else {
+                addMessage(`📨 Message: ${JSON.stringify(data)}`, 'msg-info');
+            }
+        };
+
+        ws.onerror = (error) => {
+            document.getElementById('status').className = 'disconnected';
+            document.getElementById('status').textContent = '❌ Connection Error';
+            addMessage(`Error: Check if backend is running on port 8000`, 'msg-error');
+        };
+
+        ws.onclose = () => {
+            document.getElementById('status').className = 'disconnected';
+            document.getElementById('status').textContent = '🔴 Disconnected';
+            addMessage('Connection closed', 'msg-error');
+        };
+    }
+
+    function disconnectWS() {
+        if (ws) {
+            ws.close();
+            ws = null;
+        }
+    }
+
+    function clearMessages() {
+        document.getElementById('messages').innerHTML = '';
+    }
+</script>
+
+</body>
+</html>
